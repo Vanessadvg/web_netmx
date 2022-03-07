@@ -1,0 +1,60 @@
+version: "3.7"
+services:
+  db: 
+    image: mariadb:10.3
+    restart: 'always'
+    volumes:
+      - ./back/bd:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: netmx_idiomas
+      MYSQL_USER: "usuarioyii"
+      MYSQL_PASSWORD: "1234567"
+      MYSQL_ROOT_PASSWORD: "1234567"
+  php:
+    volumes:
+       - ./back/php/:/var/www/html
+    depends_on:
+      - db
+    image: netmx/php70
+    mem_limit: 8192M
+    links:
+      - db
+    ports:
+      - "7003:80"
+    restart: always
+    environment:
+      - TZ=America/Mexico_City
+  nginx:
+        image: nginx
+        links:
+            - php
+            - front
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - ./back:/var/www/store
+            - ./front:/var/www/app
+  front:
+       image: node:14-alpine
+       command: bash -c "npm install && npm start"
+       container_name: front
+       build: ./front
+       working_dir: /home/node/app
+       volumes:
+            - ./front:/home/node/app
+       ports:
+         - 3000:3000
+      
+  phpmyadmin:   
+    container_name: phpmyadmin-4
+    image: phpmyadmin/phpmyadmin     
+    environment:
+      PMA_HOST: db 
+      UPLOAD_LIMIT: 10000000000 
+      MAX_EXECUTION_TIME: 200000
+    links:      
+    - db    
+    ports:      
+    - "8085:80"    
+    restart: always       
